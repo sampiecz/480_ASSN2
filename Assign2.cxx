@@ -8,16 +8,11 @@
  Date Due: Sep 17, 2019 
  Purpose: Pipes yo. 
  ************************************************************/
-#include <iostream>
-#include <iomanip>
-#include <stdio.h>
+#include <sys/wait.h>             /* Needed to use wait() */
+#include <stdio.h>                  
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-using std::cout;
-using std::endl;
-using std::cerr;
+#include <unistd.h>               /* UNIX and POSIX constants and functions (fork, pipe) */
+#include <string.h>               /* Needed to use strlen() */
 
 // Instantiate pipe vars
 int pipeA[2];
@@ -32,36 +27,28 @@ int PWork()
   close(pipeB[0]);
   close(pipeB[1]);
   close(pipeC[1]);
-  cout << "The parent process is ready to proceed." << endl;
-
+  printf("The parent process is ready to proceed.\n");
 
   long M = 1;
-  int in = pipeA[1];
-  int out = pipeC[0];
 
-  write(out, "1", 2);
+  write(pipeA[1], "1", 2);
 
   while(M < 999999999)
   {
     char buffer[15] = "";
-    char* ptr; 
-    do
-    {
-      read(in, ptr, 1);
-      strcat(buffer, ptr);
-    } 
-    while(ptr[0] != '\0');
-
+    char* buf;
+    while (read(pipeC[0], &buf, 1) > 0 && buf[0] != '\0')
+      strcat(buffer, buf);
+    
     M = atol(buffer);
     M = 3 * M + 7;
 
-    cout << "Parent:       Value =  " << M << endl; 
-    sprintf(buffer, "%ld", M);
-    write(out, buffer, strlen(buffer) + 1);
+    sprintf(buffer, "Parent:       Value =  %ld", M);
+    write(pipeA[1], buffer, strlen(buffer) + 1);
   }
 
-  close(pipeA[1]);
   close(pipeC[0]);
+  close(pipeA[1]);
 
   return 1;
 }
@@ -73,31 +60,24 @@ int CWork()
   close(pipeB[0]);
   close(pipeC[0]);
   close(pipeC[1]);
-  cout << "The child process is ready to proceed." << endl;
+  printf("The child process is ready to proceed.\n");
 
   long M = 1;
-  int in = pipeA[0];
-  int out = pipeB[1];
 
   while(M < 999999999)
   {
     char buffer[15] = "";
-    char* ptr; 
-    do
-    {
-      read(in, ptr, 1);
-      strcat(buffer, ptr);
-    } 
-    while(ptr[0] != '\0');
-
+    char* buf;
+    while (read(pipeA[0], &buf, 1) > 0 && buf[0] != '\0')
+      strcat(buffer, buf);
+    
     M = atol(buffer);
     M = 2 * M + 5;
-
-    cout << "Child:       Value =  " << M << endl; 
-    sprintf(buffer, "%ld", M);
-    write(out, buffer, strlen(buffer) + 1);
+    
+    sprintf(buffer, "Child:       Value =  %ld", M);
+    write(pipeB[1], buffer, strlen(buffer) + 1);
   }
-  
+
   close(pipeA[0]);
   close(pipeB[1]);
 
@@ -111,29 +91,22 @@ int GWork()
   close(pipeA[1]);
   close(pipeB[1]);
   close(pipeC[0]);
-  cout << "The grandchild process is ready to proceed." << endl;
+  printf("The grandchild process is ready to proceed.\n");
 
   long M = 1;
-  int in = pipeB[0];
-  int out = pipeC[1];
 
   while(M < 999999999)
   {
     char buffer[15] = "";
-    char* ptr; 
-    do
-    {
-      read(in, ptr, 1);
-      strcat(buffer, ptr);
-    } 
-    while(ptr[0] != '\0');
-
+    char* buf;
+    while (read(pipeB[0], &buf, 1) > 0 && buf[0] != '\0')
+      strcat(buffer, buf);
+    
     M = atol(buffer);
     M = 5 * M + 1;
-
-    cout << "Grandchild:       Value =  " << M << endl; 
-    sprintf(buffer, "%ld", M);
-    write(out, buffer, strlen(buffer) + 1);
+    
+    sprintf(buffer, "Child:       Value =  %ld", M);
+    write(pipeC[1], buffer, strlen(buffer) + 1);
   }
 
   close(pipeB[0]);
@@ -148,36 +121,37 @@ int main()
   // Pipe error handling
   if (pipe(pipeA) == -1)
   {
-    cerr << "Pipe #A error" << endl;
-    exit(-5);
+    fprintf(stderr, "%s", "Pipe #A error");           
+    exit(EXIT_FAILURE);
   }
   else if (pipe(pipeB) == -1)
   {
-    cerr << "Pipe #B error" << endl;
-    exit(-5);
+    fprintf(stderr, "%s", "Pipe #B error");           
+    exit(EXIT_FAILURE);
   }
   else if (pipe(pipeC) == -1)
   {
-    cerr << "Pipe #C error" << endl;
-    exit(-5);
+    fprintf(stderr, "%s", "Pipe #C error");           
+    exit(EXIT_FAILURE);
   }
 
-  // Start forking
+  // Start forking this is child now
   pid_t pid = fork();
 
-  if(pid < 0)
+  if(pid == -1)
   {
-    cerr << "Fork #1 error" << endl;
-    exit(-5);
+    fprintf(stderr, "%s", "Fork #1 error \n");
+    exit(EXIT_FAILURE);
   }
   else if(pid == 0) 
   {
-    int pid = fork();
+    // Grandchild pid now
+    pid = fork();
 
-    if(pid < 0)
+    if(pid == -1)
     {
-      cerr << "Fork #2 error" << endl;
-      exit(-5);
+      fprintf(stderr, "%s", "Fork #2 error \n");
+      exit(EXIT_FAILURE);
     }
     else if(pid == 0)
     {
