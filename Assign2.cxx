@@ -23,170 +23,160 @@ using std::right;
 using std::setw;
 using std::to_string;
 
-// Instantiate pipe vars
-int pipeA[2];
-int pipeB[2];
-int pipeC[2];
+
 
 // Parent function
-int PWork()
+int PWork(int read1, int write1)
 {
-  close(pipeA[0]);
-  close(pipeB[0]);
-  close(pipeB[1]);
-  close(pipeC[1]);
+ 	
+	char buffer[15] = "";
+	char value[15] = "1";
   cerr << "The parent process is ready to proceed.\n";
 
-  long M = 1;
+  long int M = 1;
  
-  write(pipeA[1], "1", 2);
-
+	sprintf(buffer, "%ld", M);
+  write(write1, value, strlen(value) + 1);
+	cerr << setw(10) << left << "Parent" << "Value: " << setw(12) << right << value << endl;
 
   // 2
   while(M < 999999999)
   {
-		char buffer[15] = "";
-		char value[15] = "1";
 
     // a
+		char temp;
 		int i = 0;
-    do
-    {
-      read(pipeC[0], &value[i++], 1);
-			strcat(buffer, &value[i]);
-    }
-    while (buffer[i-1] != '\0');
+		while(read(read1, &temp , 1) > 0 && temp != '\0')
+		{
+		  value[i] = temp;	
+			i++;
+		}
+
+		value[i] = '\0';
 
     // c
-    M = atol(buffer);
+    M = atol(value);
 
     // d
     M = 3 * M + 7;
 
     // e
     sprintf(buffer, "%ld", M);
+    write(write1, buffer, strlen(buffer) + 1);
     cerr << setw(10) << left << "Parent" << "Value: " << setw(12) << right << value << endl;
-
-    // f
-    write(pipeB[1], buffer, strlen(buffer) + 1);
   }
 
-  close(pipeC[0]);
-  close(pipeA[1]);
+	return 1;
 
-  wait(0);
-  exit(0);
 }
 
+
 // Child function
-int CWork()
+int CWork(int read1, int write1)
 {
-  close(pipeA[1]);
-  close(pipeB[0]);
-  close(pipeC[0]);
-  close(pipeC[1]);
+
+	char buffer[15] = "";
+	char value[15] = "1";
   cerr << "The child process is ready to proceed.\n";
 
-  long M = 1;
-  char buffer[15] = "";
-  char value[15] = "1";
-  
+  long int M = 1;
+
   // 2
   while(M < 999999999)
   {
+
     // a
+		char temp;
 		int i = 0;
-    do
-    {
-      read(pipeA[0], &buffer[i++], 1);
-			strcat(buffer, &value[i]);
-    }
-    while (buffer[i-1] != '\0');
+		while(read(read1, &temp , 1) > 0 && temp != '\0')
+		{
+		  value[i] = temp;	
+			i++;
+		}
+
+		value[i] = '\0';
 
     // c
-    M = atol(buffer);
+    M = atol(value);
 
     // d
     M = 2 * M + 5;
 
     // e
     sprintf(buffer, "%ld", M);
-    cerr << setw(10) << left << "Parent" << "Value: " << setw(12) << right << value << endl;
+    write(write1, buffer, strlen(buffer) + 1);
+    cerr << setw(10) << left << "Child" << "Value: " << setw(12) << right << value << endl;
 
-    // f
-    write(pipeB[1], buffer, strlen(buffer) + 1);
   }
 
+	return 1;
 
-  close(pipeA[0]);
-  close(pipeB[1]);
-
-  wait(0);
-  exit(0);
 }
 
 // Grandchild function
-int GWork()
+int GWork(int read1, int write1)
 {
-  close(pipeA[0]);
-  close(pipeA[1]);
-  close(pipeB[1]);
-  close(pipeC[0]);
+
+	char buffer[15] = "";
+	char value[15] = "1";
   cerr << "The grandchild process is ready to proceed.\n";
 
-	long M = 1;
-  char buffer[15] = "";
-  
+  long int M = 1;
+
   // 2
   while(M < 999999999)
   {
-		// a
+
+    // a
+		char temp;
 		int i = 0;
-    do
-    {
-      read(pipeB[0], &buffer[i++], 1);
-			strcat(buffer, &value[i]);
-    }
-    while (buffer[i-1] != '\0');
+		while(read(read1, &temp , 1) > 0 && temp != '\0')
+		{
+		  value[i] = temp;	
+			i++;
+		}
+
+		value[i] = '\0';
 
     // c
-    M = atol(buffer);
+    M = atol(value);
 
     // d
     M = 5 * M + 1;
 
     // e
     sprintf(buffer, "%ld", M);
-    cerr << setw(10) << left << "Parent" << "Value: " << setw(12) << right << value << endl;
+    write(write1, buffer, strlen(buffer) + 1);
+    cerr << setw(10) << left << "Grandchild" << "Value: " << setw(12) << right << value << endl;
 
-    // f
-    write(pipeB[1], buffer, strlen(buffer) + 1);
   }
 
-  close(pipeB[0]);
-  close(pipeC[1]);
+	return 1;
 
-  exit(0);
 }
 
 int main()
 {
-  
+  // Instantiate pipe vars
+	int pipeA[2];
+	int pipeB[2];
+	int pipeC[2];
+
   // Pipe error handling
   if (pipe(pipeA) == -1)
   {
     fprintf(stderr, "%s", "Pipe #A error");           
-    exit(EXIT_FAILURE);
+    exit(-5);
   }
-  else if (pipe(pipeB) == -1)
+  if (pipe(pipeB) == -1)
   {
     fprintf(stderr, "%s", "Pipe #B error");           
-    exit(EXIT_FAILURE);
+    exit(-5);
   }
-  else if (pipe(pipeC) == -1)
+  if (pipe(pipeC) == -1)
   {
     fprintf(stderr, "%s", "Pipe #C error");           
-    exit(EXIT_FAILURE);
+    exit(-5);
   }
 
   // Start forking this is child now
@@ -195,7 +185,7 @@ int main()
   if(pid == -1)
   {
     fprintf(stderr, "%s", "Fork #1 error \n");
-    exit(EXIT_FAILURE);
+    exit(-5);
   }
   else if(pid == 0) 
   {
@@ -205,25 +195,58 @@ int main()
     if(pid2 == -1)
     {
       fprintf(stderr, "%s", "Fork #2 error \n");
-      exit(EXIT_FAILURE);
+      exit(-5);
     }
     else if(pid2 == 0)
     {
       // Grandchild
-      GWork();
+			close(pipeA[0]);
+			close(pipeA[1]);
+			close(pipeB[1]);
+			close(pipeC[0]);
+
+      GWork(pipeB[0], pipeC[1]);
+
+			close(pipeB[0]);
+			close(pipeC[1]);
     }
     else
     {
       // Child
-      CWork();
+
+			close(pipeA[1]);
+			close(pipeB[0]);
+			close(pipeC[0]);
+			close(pipeC[1]);
+
+      CWork(pipeA[0], pipeB[1]);
+
+			close(pipeA[0]);
+			close(pipeB[1]);
+
+			wait(0);
+			exit(0);
     }
 
   }
-  else if(pid > 0)
+  else 
   {
     // Parent
-    PWork();
+		close(pipeA[0]);
+		close(pipeB[0]);
+		close(pipeB[1]);
+		close(pipeC[1]);
+
+    PWork(pipeC[0], pipeA[1]);
+
+		close(pipeC[0]);
+		close(pipeA[1]);
+
+		wait(0);
+		exit(0);
+
   }
 
   return 0;
+
 }
