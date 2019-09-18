@@ -14,6 +14,8 @@
 #include <unistd.h>               /* UNIX and POSIX constants and functions (fork, pipe) */
 #include <string.h>               /* Needed to use strlen() */
 
+using std::cerr;
+
 // Instantiate pipe vars
 int pipeA[2];
 int pipeB[2];
@@ -22,26 +24,47 @@ int pipeC[2];
 // Parent function
 int PWork()
 {
-  // Close uneeded pipes
   close(pipeA[0]);
   close(pipeB[0]);
   close(pipeB[1]);
   close(pipeC[1]);
-  printf("The parent process is ready to proceed.\n");
-  sprintf(buffer, "Parent:       Value =  %ld", M);
+  cerr << "The parent process is ready to proceed.\n";
 
   long M = 1;
   char buffer[15];
+  char* buf = buffer;
   char value[15] = "1";
+  char* val = value;
 
-  write(pipeA[1], value, 1);
+  
+  write(pipeA[1], val, 1);
 
+  // 2
   while(M < 999999999)
   {
+    // a
+    do
+    {
+      read(pipeC[0], buf, 1);
+    }
+    while (buf[0] != '\0')
 
-    if(read(pipeC[0], *buffer, 1))
-    
+    // b
+    val[strlen(*val)] = '\0';
 
+    // c
+    M = atol(buffer);
+
+    // d
+    M = 3 * M + 7;
+
+    // e
+    sprintf(buf, "%d", M);
+    sprintf(Value, "Parent:      Value: %d\n", M);
+    cerr << Value;
+
+    // f
+    write(pipeB[1], buf, strlen(buf) + 1);
   }
 
   close(pipeC[0]);
@@ -58,21 +81,19 @@ int CWork()
   close(pipeB[0]);
   close(pipeC[0]);
   close(pipeC[1]);
-  printf("The child process is ready to proceed.\n");
+  cerr << "The child process is ready to proceed.\n";
 
   long M = 1;
 
   while(M < 999999999)
   {
     char buffer[15] = "";
-    char* buf;
-    while (read(pipeA[0], &buf, 1) > 0 && buf[0] != '\0')
+    char* buf = buffer;
+    while (read(pipeA[0], buf, 1) > 0 && buf[0] != '\0')
       strcat(buffer, buf);
-    
     M = atol(buffer);
     M = 2 * M + 5;
-    
-    sprintf(buffer, "Child:       Value =  %ld", M);
+    cerr << "Child:       Value = " + to_string(M) + "\n";
     write(pipeB[1], buffer, strlen(buffer) + 1);
   }
 
@@ -90,22 +111,20 @@ int GWork()
   close(pipeA[1]);
   close(pipeB[1]);
   close(pipeC[0]);
-  printf("The grandchild process is ready to proceed.\n");
+  cerr << "The grandchild process is ready to proceed.\n";
 
   long M = 1;
 
   while(M < 999999999)
   {
     char buffer[15] = "";
-    char* buf;
-    while (read(pipeB[0], &buf, 1) > 0 && buf[0] != '\0')
+    char* buf = buffer;
+    while (read(pipeB[0], buf, 1) > 0 && buf[0] != '\0')
       strcat(buffer, buf);
-    
     M = atol(buffer);
     M = 5 * M + 1;
-    
-    sprintf(buffer, "Child:       Value =  %ld", M);
-    write(pipeC[1], buffer, strlen(buffer) + 1);
+    cerr << "Grandchild:       Value = " + to_string(M) + "\n";
+    write(pipeB[1], buffer, strlen(buffer) + 1);
   }
 
   close(pipeB[0]);
