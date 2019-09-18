@@ -28,29 +28,27 @@ int PWork()
   close(pipeB[1]);
   close(pipeC[1]);
   printf("The parent process is ready to proceed.\n");
+  sprintf(buffer, "Parent:       Value =  %ld", M);
 
   long M = 1;
+  char buffer[15];
+  char value[15] = "1";
 
-  write(pipeA[1], "1", 2);
+  write(pipeA[1], value, 1);
 
   while(M < 999999999)
   {
-    char buffer[15] = "";
-    char* buf;
-    while (read(pipeC[0], &buf, 1) > 0 && buf[0] != '\0')
-      strcat(buffer, buf);
-    
-    M = atol(buffer);
-    M = 3 * M + 7;
 
-    sprintf(buffer, "Parent:       Value =  %ld", M);
-    write(pipeA[1], buffer, strlen(buffer) + 1);
+    if(read(pipeC[0], *buffer, 1))
+    
+
   }
 
   close(pipeC[0]);
   close(pipeA[1]);
 
-  return 1;
+  wait(0);
+  exit(0);
 }
 
 // Child function
@@ -81,7 +79,8 @@ int CWork()
   close(pipeA[0]);
   close(pipeB[1]);
 
-  return 1;
+  wait(0);
+  exit(0);
 }
 
 // Grandchild function
@@ -112,7 +111,7 @@ int GWork()
   close(pipeB[0]);
   close(pipeC[1]);
 
-  return 1;
+  exit(0);
 }
 
 int main()
@@ -157,13 +156,11 @@ int main()
     {
       // Grandchild
       GWork();
-      exit(0);
     }
     else
     {
       // Child
       CWork();
-      exit(0);
     }
 
   }
@@ -171,7 +168,6 @@ int main()
   {
     // Parent
     PWork();
-    exit(0);
   }
 
   return 0;
