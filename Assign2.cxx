@@ -26,10 +26,10 @@ using std::to_string;
 
 
 // Parent function
-int PWork(int read1, int write1)
+void PWork(int read1, int write1)
 {
  	
-	char buffer[15] = "";
+	char buffer[15];
 	char value[15] = "1";
   cerr << "The parent process is ready to proceed.\n";
 
@@ -40,12 +40,12 @@ int PWork(int read1, int write1)
 	cerr << setw(10) << left << "Parent" << "Value: " << setw(12) << right << value << endl;
 
   // 2
-  while(M < 999999999)
+  while(M < 99999999999)
   {
 
     // a
 		char temp;
-		int i = 0;
+		long int i = 0;
 		while(read(read1, &temp , 1) > 0 && temp != '\0')
 		{
 		  value[i] = temp;	
@@ -66,28 +66,26 @@ int PWork(int read1, int write1)
     cerr << setw(10) << left << "Parent" << "Value: " << setw(12) << right << value << endl;
   }
 
-	return 1;
-
 }
 
 
 // Child function
-int CWork(int read1, int write1)
+void  CWork(int read1, int write1)
 {
 
-	char buffer[15] = "";
+	char buffer[15];
 	char value[15] = "1";
   cerr << "The child process is ready to proceed.\n";
 
   long int M = 1;
 
   // 2
-  while(M < 999999999)
+  while(M < 99999999999)
   {
 
     // a
 		char temp;
-		int i = 0;
+		long int i = 0;
 		while(read(read1, &temp , 1) > 0 && temp != '\0')
 		{
 		  value[i] = temp;	
@@ -109,27 +107,25 @@ int CWork(int read1, int write1)
 
   }
 
-	return 1;
-
 }
 
 // Grandchild function
-int GWork(int read1, int write1)
+void GWork(int read1, int write1)
 {
 
-	char buffer[15] = "";
+	char buffer[15];
 	char value[15] = "1";
   cerr << "The grandchild process is ready to proceed.\n";
 
   long int M = 1;
 
   // 2
-  while(M < 999999999)
+  while(M < 99999999999)
   {
 
     // a
 		char temp;
-		int i = 0;
+		long int i = 0;
 		while(read(read1, &temp , 1) > 0 && temp != '\0')
 		{
 		  value[i] = temp;	
@@ -150,8 +146,6 @@ int GWork(int read1, int write1)
     cerr << setw(10) << left << "Grandchild" << "Value: " << setw(12) << right << value << endl;
 
   }
-
-	return 1;
 
 }
 
@@ -187,7 +181,7 @@ int main()
     fprintf(stderr, "%s", "Fork #1 error \n");
     exit(-5);
   }
-  else if(pid == 0) 
+  if(pid == 0) 
   {
     // Grandchild pid now
     pid_t pid2 = fork();
@@ -197,7 +191,8 @@ int main()
       fprintf(stderr, "%s", "Fork #2 error \n");
       exit(-5);
     }
-    else if(pid2 == 0)
+
+    if( pid2 == 0)
     {
       // Grandchild
 			close(pipeA[0]);
