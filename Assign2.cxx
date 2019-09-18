@@ -9,12 +9,19 @@
  Purpose: Pipes yo. 
  ************************************************************/
 #include <sys/wait.h>             /* Needed to use wait() */
+#include <iostream>
+#include <iomanip>
 #include <stdio.h>                  
 #include <stdlib.h>
 #include <unistd.h>               /* UNIX and POSIX constants and functions (fork, pipe) */
 #include <string.h>               /* Needed to use strlen() */
 
 using std::cerr;
+using std::endl;
+using std::left;
+using std::right;
+using std::setw;
+using std::to_string;
 
 // Instantiate pipe vars
 int pipeA[2];
@@ -31,26 +38,24 @@ int PWork()
   cerr << "The parent process is ready to proceed.\n";
 
   long M = 1;
-  char buffer[15];
-  char* buf = buffer;
-  char value[15] = "1";
-  char* val = value;
+ 
+  write(pipeA[1], "1", 2);
 
-  
-  write(pipeA[1], val, 1);
 
   // 2
   while(M < 999999999)
   {
+		char buffer[15] = "";
+		char value[15] = "1";
+
     // a
+		int i = 0;
     do
     {
-      read(pipeC[0], buf, 1);
+      read(pipeC[0], &value[i++], 1);
+			strcat(buffer, &value[i]);
     }
-    while (buf[0] != '\0')
-
-    // b
-    val[strlen(*val)] = '\0';
+    while (buffer[i-1] != '\0');
 
     // c
     M = atol(buffer);
@@ -59,12 +64,11 @@ int PWork()
     M = 3 * M + 7;
 
     // e
-    sprintf(buf, "%d", M);
-    sprintf(Value, "Parent:      Value: %d\n", M);
-    cerr << Value;
+    sprintf(buffer, "%ld", M);
+    cerr << setw(10) << left << "Parent" << "Value: " << setw(12) << right << value << endl;
 
     // f
-    write(pipeB[1], buf, strlen(buf) + 1);
+    write(pipeB[1], buffer, strlen(buffer) + 1);
   }
 
   close(pipeC[0]);
@@ -84,18 +88,35 @@ int CWork()
   cerr << "The child process is ready to proceed.\n";
 
   long M = 1;
-
+  char buffer[15] = "";
+  char value[15] = "1";
+  
+  // 2
   while(M < 999999999)
   {
-    char buffer[15] = "";
-    char* buf = buffer;
-    while (read(pipeA[0], buf, 1) > 0 && buf[0] != '\0')
-      strcat(buffer, buf);
+    // a
+		int i = 0;
+    do
+    {
+      read(pipeA[0], &buffer[i++], 1);
+			strcat(buffer, &value[i]);
+    }
+    while (buffer[i-1] != '\0');
+
+    // c
     M = atol(buffer);
+
+    // d
     M = 2 * M + 5;
-    cerr << "Child:       Value = " + to_string(M) + "\n";
+
+    // e
+    sprintf(buffer, "%ld", M);
+    cerr << setw(10) << left << "Parent" << "Value: " << setw(12) << right << value << endl;
+
+    // f
     write(pipeB[1], buffer, strlen(buffer) + 1);
   }
+
 
   close(pipeA[0]);
   close(pipeB[1]);
@@ -113,17 +134,32 @@ int GWork()
   close(pipeC[0]);
   cerr << "The grandchild process is ready to proceed.\n";
 
-  long M = 1;
-
+	long M = 1;
+  char buffer[15] = "";
+  
+  // 2
   while(M < 999999999)
   {
-    char buffer[15] = "";
-    char* buf = buffer;
-    while (read(pipeB[0], buf, 1) > 0 && buf[0] != '\0')
-      strcat(buffer, buf);
+		// a
+		int i = 0;
+    do
+    {
+      read(pipeB[0], &buffer[i++], 1);
+			strcat(buffer, &value[i]);
+    }
+    while (buffer[i-1] != '\0');
+
+    // c
     M = atol(buffer);
+
+    // d
     M = 5 * M + 1;
-    cerr << "Grandchild:       Value = " + to_string(M) + "\n";
+
+    // e
+    sprintf(buffer, "%ld", M);
+    cerr << setw(10) << left << "Parent" << "Value: " << setw(12) << right << value << endl;
+
+    // f
     write(pipeB[1], buffer, strlen(buffer) + 1);
   }
 
@@ -164,14 +200,14 @@ int main()
   else if(pid == 0) 
   {
     // Grandchild pid now
-    pid = fork();
+    pid_t pid2 = fork();
 
-    if(pid == -1)
+    if(pid2 == -1)
     {
       fprintf(stderr, "%s", "Fork #2 error \n");
       exit(EXIT_FAILURE);
     }
-    else if(pid == 0)
+    else if(pid2 == 0)
     {
       // Grandchild
       GWork();

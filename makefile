@@ -5,7 +5,7 @@
 #
 
 # Compiler variables
-CCFLAGS = -ansi -Wall -std=c++11
+CCFLAGS = -ggdb -Wall -std=c++11
 
 # Rule to link object code files to create executable file
 Assign2: Assign2.o
